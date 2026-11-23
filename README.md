@@ -15,7 +15,7 @@
 ```text
 public/                 GitHub Pages 只发布这个目录
 ├── index.html          主页，样式和脚本都写在这一个文件里
-├── assets/             像素横幅和 less is more 标语，白天、夜晚各一份
+├── assets/             像素横幅，白天、夜晚各一份
 └── styles.css          早期版本的样式表，新页面已不再引用
 tests/                  主页的基本检查
 ```
