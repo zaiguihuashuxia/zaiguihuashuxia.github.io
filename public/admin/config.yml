@@ -1,4 +1,5 @@
 # 写作后台（Sveltia CMS）配置，文档：https://sveltiacms.app/en/docs
+# 笔记相关的 collections 在 notes.js 里生成，会接在这里的 collections 后面。
 # yaml-language-server: $schema=https://unpkg.com/@sveltia/cms@0.262.1/schema/sveltia-cms.json
 
 backend:
@@ -49,28 +50,5 @@ collections:
         modes: [raw, rich_text]
         hint: 列表页只显示第一段；想自己决定截到哪里，就在那里单独写一行 <!-- more -->
 
-  - name: notes
-    label: 笔记
-    label_singular: 笔记
-    description: 左边的文件夹树里选好文件夹，再点 New 写笔记；树下面的 New Folder 新建文件夹，文件夹里保存了第一篇笔记才会真正建好。
-    folder: public/notes
-    create: true
-    nested: { depth: 8, subfolders: false }
-    meta: { path: {} }
-    fields:
-      - { name: title, label: 标题, widget: string }
-      - { name: nav_title, label: 导航名, widget: string, required: false, hint: 左侧导航里显示的短名字，不填就用标题 }
-      - { name: description, label: 简介, widget: string, required: false, hint: 显示在笔记卡片上，不填就用正文的第一段 }
-      - { name: order, label: 排序, widget: number, value_type: int, required: false, hint: 数字越小越靠前 }
-      - { name: series, label: 系列, widget: string, required: false, hint: 同一系列的笔记会按排序自动串成上一篇、下一篇，这时排序必填 }
-      - { name: tags, label: 标签, widget: list, required: false }
-      - { name: comments, label: 评论, widget: boolean, required: false, default: false, hint: 打开后这一页底部显示评论区 }
-      - name: hide
-        label: 隐藏页面元素
-        widget: select
-        multiple: true
-        required: false
-        options:
-          - { label: 左侧导航, value: navigation }
-          - { label: 右侧目录, value: toc }
-      - { name: body, label: 正文, widget: markdown, modes: [raw, rich_text] }
+  # 笔记的 collections 不写在这里：notes.js 按「笔记专题」里的列表生成，每个专题一个，
+  # 对应 public/notes/<文件夹>/。在后台改了专题列表，刷新页面就能看到。

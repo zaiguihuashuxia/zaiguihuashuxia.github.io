@@ -43,8 +43,10 @@ BLOG_POSTS_PREFIX = "blog/posts/"
 NOTES_DIR_NAME = "notes"
 NOTES_TITLE = "笔记"
 NOTES_INTRO = "按主题整理的学习笔记，整理好一篇放一篇。"
+# The notes topics, edited in the writing admin where each one is a collection (admin/notes.js).
+TOPICS_FILE = f"{NOTES_DIR_NAME}/topics.json"
 HOMEPAGE_URL = "https://zaiguihuashuxia.github.io/"
-POST_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LEADING_TITLE = re.compile(r"\A\s*#[ \t]+[^\n]*\n+")
 FENCE = re.compile(r"^\s*(```|~~~)", re.M)
 SUMMARY_LENGTH = 80
@@ -82,12 +84,27 @@ class Document:
 
 
 @dataclass(frozen=True)
+class Topic:
+    """One entry of notes/topics.json: a top-level notes folder with its name and blurb."""
+
+    folder: str
+    title: str
+    description: str
+    order: int
+
+
+@dataclass(frozen=True)
 class Folder:
-    """A folder of notes; its index.md is optional and only adds a title and an intro."""
+    """A folder of notes; its index.md is optional and only adds a title and an intro.
+
+    A topic folder takes its name, blurb and place from notes/topics.json instead, and exists
+    even before the repository has a folder for it.
+    """
 
     path: Path
     relative_path: str
     index: Optional[Document]
+    topic: Optional[Topic] = None
 
     @property
     def index_path(self) -> str:
@@ -99,27 +116,75 @@ class Folder:
 
     @property
     def title(self) -> str:
+        if self.topic:
+            return self.topic.title
         if self.index:
             return self.index.title
         return NOTES_TITLE if self.is_notes_root else self.path.name
 
     @property
     def nav_title(self) -> str:
+        if self.topic:
+            return self.topic.title
         return self.index.nav_title if self.index else self.title
 
     @property
     def order(self) -> int:
+        if self.topic:
+            return self.topic.order
         return self.index.order if self.index else DEFAULT_ORDER
 
     @property
     def description(self) -> str:
+        if self.topic and self.topic.description:
+            return self.topic.description
         return self.index.description if self.index else ""
 
     def generated_markdown(self) -> str:
         """The page the build uses for this folder while it has no index.md of its own."""
         heading = re.sub(r"([\\`*_\[\]#])", r"\\\1", self.title)
-        intro = f"\n{NOTES_INTRO}\n" if self.is_notes_root else ""
-        return f"---\ntitle: {json.dumps(self.title, ensure_ascii=False)}\n---\n\n# {heading}\n{intro}"
+        intro = NOTES_INTRO if self.is_notes_root else self.description
+        intro_block = f"\n{intro}\n" if intro else ""
+        return f"---\ntitle: {json.dumps(self.title, ensure_ascii=False)}\n---\n\n# {heading}\n{intro_block}"
+
+
+def load_topics(public_dir: Path = PUBLIC_DIR) -> List[Topic]:
+    """The notes topics in the order the writing admin lists them; none without the file."""
+    path = public_dir / TOPICS_FILE
+    if not path.is_file():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ContentValidationError(f"{TOPICS_FILE}: not valid JSON ({error})") from error
+    items = data.get("topics", []) if isinstance(data, dict) else None
+    if not isinstance(items, list):
+        raise ContentValidationError(f"{TOPICS_FILE}: expected an object with a 'topics' list")
+
+    topics: List[Topic] = []
+    errors: List[str] = []
+    seen: Dict[str, int] = {}
+    for position, item in enumerate(items, start=1):
+        if not isinstance(item, dict):
+            errors.append(f"{TOPICS_FILE}: topic {position} is not an object")
+            continue
+        folder, title, description = item.get("folder"), item.get("title"), item.get("description")
+        if not isinstance(folder, str) or not SLUG.match(folder):
+            errors.append(
+                f"{TOPICS_FILE}: topic {position} needs a 'folder' of lowercase letters, digits "
+                "and hyphens, such as agent"
+            )
+        elif folder in seen:
+            errors.append(f"{TOPICS_FILE}: topics {seen[folder]} and {position} share the folder '{folder}'")
+        elif not isinstance(title, str) or not title.strip():
+            errors.append(f"{TOPICS_FILE}: topic {position} ('{folder}') needs a 'title'")
+        else:
+            seen[folder] = position
+            text = description.strip() if isinstance(description, str) else ""
+            topics.append(Topic(folder, title.strip(), text, position))
+    if errors:
+        raise ContentValidationError("\n".join(errors))
+    return topics
 
 
 def read_document(path: Path, public_dir: Path = PUBLIC_DIR) -> Document:
@@ -174,6 +239,10 @@ def validate_content(public_dir: Path = PUBLIC_DIR) -> List[Document]:
     errors: List[str] = []
     series_orders: Dict[Tuple[str, int], str] = {}
     post_slugs: Dict[str, str] = {}
+    try:
+        load_topics(public_dir)
+    except ContentValidationError as error:
+        errors.append(str(error))
 
     for document in documents:
         title = document.metadata.get("title")
@@ -232,7 +301,7 @@ def _validate_post(document: Document, seen_slugs: Dict[str, str]) -> List[str]:
     if not isinstance(created, date):
         errors.append(f"{document.relative_path}: blog post requires a 'date' such as 2026-11-23")
     slug = document.metadata.get("slug")
-    if not isinstance(slug, str) or not POST_SLUG.match(slug):
+    if not isinstance(slug, str) or not SLUG.match(slug):
         errors.append(
             f"{document.relative_path}: blog post requires a 'slug' of lowercase letters, "
             "digits and hyphens, such as first-post"
@@ -263,49 +332,60 @@ def _contains_documents(directory: Path, by_path: Dict[Path, Document]) -> bool:
 
 
 def list_children(
-    directory: Path, by_path: Dict[Path, Document], public_dir: Path = PUBLIC_DIR
+    directory: Path,
+    by_path: Dict[Path, Document],
+    public_dir: Path = PUBLIC_DIR,
+    topics: Sequence[Topic] = (),
 ) -> Tuple[List[Folder], List[Document]]:
     """Subfolders, then pages, of one folder, each sorted by order and then name.
 
     Outside notes/ a subfolder needs an index.md to count; inside notes/ any folder holding a
-    note counts, because the writing admin creates folders without one.
+    note counts, because the writing admin creates folders without one. In notes/ itself every
+    topic counts, first and in the admin's order, even before its first note is saved.
     """
-    if not directory.is_dir():
-        return [], []
+    unplaced = {topic.folder: topic for topic in topics} if directory == public_dir / NOTES_DIR_NAME else {}
     folders: List[Folder] = []
-    for child_dir in sorted(path for path in directory.iterdir() if path.is_dir()):
-        index = by_path.get(child_dir / "index.md")
-        if index is None and not (
-            _is_notes_folder(child_dir, public_dir) and _contains_documents(child_dir, by_path)
-        ):
-            continue
-        folders.append(Folder(child_dir, child_dir.relative_to(public_dir).as_posix(), index))
-    pages = [
-        by_path[path]
-        for path in sorted(directory.glob("*.md"))
-        if path.name != "index.md" and path in by_path
-    ]
+    pages: List[Document] = []
+    if directory.is_dir():
+        for child_dir in sorted(path for path in directory.iterdir() if path.is_dir()):
+            topic = unplaced.pop(child_dir.name, None)
+            index = by_path.get(child_dir / "index.md")
+            if index is None and topic is None and not (
+                _is_notes_folder(child_dir, public_dir) and _contains_documents(child_dir, by_path)
+            ):
+                continue
+            folders.append(Folder(child_dir, child_dir.relative_to(public_dir).as_posix(), index, topic))
+        pages = [
+            by_path[path]
+            for path in sorted(directory.glob("*.md"))
+            if path.name != "index.md" and path in by_path
+        ]
+    folders.extend(
+        Folder(path, path.relative_to(public_dir).as_posix(), None, topic)
+        for path, topic in ((directory / folder, topic) for folder, topic in unplaced.items())
+    )
     return sorted(folders, key=_sort_key), sorted(pages, key=_sort_key)
 
 
 def generated_folder_indexes(
     documents: Iterable[Document], public_dir: Path = PUBLIC_DIR
 ) -> List[Folder]:
-    """Notes folders without an index.md; the build gives each a listing page.
+    """Notes folders and topics without an index.md; the build gives each a listing page.
 
     The notes landing page is always among them when missing, so deleting it in the writing
     admin cannot take /notes/ off the site.
     """
     by_path = {document.path: document for document in documents}
     notes_dir = public_dir / NOTES_DIR_NAME
-    folders = {notes_dir}
+    topics = {notes_dir / topic.folder: topic for topic in load_topics(public_dir)}
+    folders = {notes_dir, *topics}
     for path in by_path:
         for parent in path.parents:
             if parent == notes_dir or notes_dir not in parent.parents:
                 break
             folders.add(parent)
     return [
-        Folder(folder, folder.relative_to(public_dir).as_posix(), None)
+        Folder(folder, folder.relative_to(public_dir).as_posix(), None, topics.get(folder))
         for folder in sorted(folders)
         if folder / "index.md" not in by_path
     ]
@@ -344,14 +424,17 @@ def note_summary(document: Document, limit: int = SUMMARY_LENGTH) -> str:
 
 
 def _build_directory_nav(
-    directory: Path, by_path: Dict[Path, Document], public_dir: Path = PUBLIC_DIR
+    directory: Path,
+    by_path: Dict[Path, Document],
+    public_dir: Path = PUBLIC_DIR,
+    topics: Sequence[Topic] = (),
 ) -> List[Any]:
     items: List[Any] = []
     if (directory / "index.md") in by_path or _is_notes_folder(directory, public_dir):
         items.append(f"{directory.relative_to(public_dir).as_posix()}/index.md")
-    folders, pages = list_children(directory, by_path, public_dir)
+    folders, pages = list_children(directory, by_path, public_dir, topics)
     items.extend(
-        {folder.nav_title: _build_directory_nav(folder.path, by_path, public_dir)}
+        {folder.nav_title: _build_directory_nav(folder.path, by_path, public_dir, topics)}
         for folder in folders
     )
     items.extend({page.nav_title: page.relative_path} for page in pages)
@@ -360,6 +443,7 @@ def _build_directory_nav(
 
 def build_navigation(documents: Sequence[Document], public_dir: Path = PUBLIC_DIR) -> List[Any]:
     by_path = {document.path: document for document in documents}
+    topics = load_topics(public_dir)
     nav: List[Any] = []
     root_index = public_dir / "index.md"
     if root_index in by_path:
@@ -374,7 +458,7 @@ def build_navigation(documents: Sequence[Document], public_dir: Path = PUBLIC_DI
     if not any(section.path == notes_dir for section in sections):
         sections.append(Folder(notes_dir, NOTES_DIR_NAME, None))
     for section in sorted(sections, key=_sort_key):
-        nav.append({section.nav_title: _build_directory_nav(section.path, by_path, public_dir)})
+        nav.append({section.nav_title: _build_directory_nav(section.path, by_path, public_dir, topics)})
     return nav
 
 

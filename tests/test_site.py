@@ -13,6 +13,8 @@ from scripts.site import (
     collect_documents,
     generated_folder_indexes,
     inspect_site,
+    list_children,
+    load_topics,
     note_summary,
     read_document,
     validate_content,
@@ -128,6 +130,75 @@ class SiteToolTests(unittest.TestCase):
         self.assertEqual(landing.index_path, "notes/index.md")
         self.assertIn("title: \"笔记\"", landing.generated_markdown())
         self.assertIn("# 笔记", landing.generated_markdown())
+
+    def test_topics_name_order_and_create_the_notes_folders(self) -> None:
+        self.write(
+            "notes/topics.json",
+            json.dumps(
+                {
+                    "topics": [
+                        {"title": "智能体", "folder": "agent", "description": "大模型 Agent"},
+                        {"title": "必学工具", "folder": "tools"},
+                    ]
+                },
+                ensure_ascii=False,
+            ),
+        )
+        self.write("notes/agent/agent01.md", "---\ntitle: agent01\n---\n")
+        self.write("notes/agent/index.md", "---\ntitle: 旧名字\ndescription: 旧简介\norder: 99\n---\n")
+        self.write("notes/misc/x.md", "---\ntitle: X\n---\n")
+        self.write("notes/备忘录1.md", "---\ntitle: 备忘录1\nnav_title: memo1\n---\n")
+        documents = validate_content(self.root)
+
+        nav = build_navigation(documents, self.root)
+        self.assertEqual(
+            nav,
+            [
+                {
+                    "笔记": [
+                        "notes/index.md",
+                        {"智能体": ["notes/agent/index.md", {"agent01": "notes/agent/agent01.md"}]},
+                        {"必学工具": ["notes/tools/index.md"]},
+                        {"misc": ["notes/misc/index.md", {"X": "notes/misc/x.md"}]},
+                        {"memo1": "notes/备忘录1.md"},
+                    ]
+                }
+            ],
+        )
+        generated = {f.index_path: f for f in generated_folder_indexes(documents, self.root)}
+        self.assertEqual(
+            sorted(generated), ["notes/index.md", "notes/misc/index.md", "notes/tools/index.md"]
+        )
+        self.assertIn("# 必学工具", generated["notes/tools/index.md"].generated_markdown())
+
+        by_path = {document.path: document for document in documents}
+        folders, pages = list_children(self.root / "notes", by_path, self.root, load_topics(self.root))
+        self.assertEqual(
+            [(folder.title, folder.description) for folder in folders],
+            [("智能体", "大模型 Agent"), ("必学工具", ""), ("misc", "")],
+        )
+        self.assertEqual([page.title for page in pages], ["备忘录1"])
+
+    def test_topics_file_is_checked(self) -> None:
+        self.write(
+            "notes/topics.json",
+            json.dumps(
+                {
+                    "topics": [
+                        {"title": "A", "folder": "Agent Notes"},
+                        {"title": "B", "folder": "b"},
+                        {"title": "C", "folder": "b"},
+                        {"folder": "d"},
+                    ]
+                }
+            ),
+        )
+        with self.assertRaises(ContentValidationError) as raised:
+            validate_content(self.root)
+        message = str(raised.exception)
+        self.assertIn("topic 1 needs a 'folder' of lowercase letters", message)
+        self.assertIn("topics 2 and 3 share the folder 'b'", message)
+        self.assertIn("topic 4 ('d') needs a 'title'", message)
 
     def test_note_summary_prefers_description_then_first_paragraph(self) -> None:
         described = self.write("a.md", "---\ntitle: A\ndescription: 一句话\n---\n\n正文\n")

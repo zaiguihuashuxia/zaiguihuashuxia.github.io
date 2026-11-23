@@ -8,9 +8,12 @@
     <link rel="icon" href="../assets/osmanthus.svg">
   </head>
   <body>
-    <!-- Sveltia CMS, pinned to one version and checked with SRI because this page holds a GitHub token. -->
+    <!-- Sveltia CMS, pinned to one version and checked with SRI because this page holds a GitHub token.
+         It waits for notes.js, which reads the notes topics and starts it with one collection each. -->
+    <script>window.CMS_MANUAL_INIT = true;</script>
     <script src="https://unpkg.com/@sveltia/cms@0.262.1/dist/sveltia-cms.js"
             integrity="sha384-0I8SJ0aZj6wQEpF/FIs2iCJqDlIhSR5xzNQNZFYMRgxcTNPPtFqCLM+PYhVLP+gg"
             crossorigin="anonymous"></script>
+    <script type="module" src="notes.js"></script>
   </body>
 </html>

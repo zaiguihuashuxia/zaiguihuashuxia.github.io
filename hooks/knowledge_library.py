@@ -22,21 +22,25 @@ from scripts.site import (  # noqa: E402
     NOTES_DIR_NAME,
     Document,
     collect_documents,
+    Topic,
     count_notes,
     generated_folder_indexes,
     list_children,
+    load_topics,
     note_summary,
 )
 
 
 SERIES: DefaultDict[str, List[Tuple[int, str]]] = defaultdict(list)
 DOCUMENTS: Dict[Path, Document] = {}
+TOPICS: List[Topic] = []
 
 
 def on_config(config: Dict[str, Any]) -> Dict[str, Any]:
     SERIES.clear()
     DOCUMENTS.clear()
     docs_dir = Path(config["docs_dir"])
+    TOPICS[:] = load_topics(docs_dir)
     for document in collect_documents(docs_dir):
         DOCUMENTS[document.path] = document
         series = document.metadata.get("series")
@@ -97,7 +101,9 @@ def _card(kind: str, href: str, title: str, text: str, count: str = "") -> str:
 
 def folder_listing(src_uri: str, docs_dir: Path, files: Any) -> str:
     """Cards for the subfolders and notes of the folder whose index page is src_uri."""
-    folders, notes = list_children(docs_dir / posixpath.dirname(src_uri), DOCUMENTS, docs_dir)
+    folders, notes = list_children(
+        docs_dir / posixpath.dirname(src_uri), DOCUMENTS, docs_dir, TOPICS
+    )
     page_file = files.get_file_from_path(src_uri)
     cards = []
     for folder in folders:
