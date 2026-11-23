@@ -1,40 +1,260 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta
-      name="description"
-      content="Wu Qi 的个人主页，记录学习、思考与持续整理的知识。"
-    >
-    <meta name="theme-color" content="#f3efe7">
-    <title>Wu Qi · 个人主页</title>
-    <link rel="stylesheet" href="styles.css">
-  </head>
-  <body>
-    <a class="skip-link" href="#main-content">跳到主要内容</a>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Wu Qi 的个人主页，记录学习、思考与持续整理的知识。">
+<title>Wu Qi · zaiguihuashuxia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff;--bg2:#f6f8fa;--fg:#1f2328;--muted:#59636e;--border:#d1d9e0;--link:#0969da;
+  --nav:#f6f8fa;--btn:#f6f8fa;--accent:#fd8c73;
+  --c0:#ebedf0;--c1:#9be9a8;--c2:#40c463;--c3:#30a14e;--c4:#216e39;
+  --pix:'Press Start 2P',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1117;--bg2:#151b23;--fg:#f0f6fc;--muted:#9198a1;--border:#3d444d;--link:#4493f8;
+  --nav:#010409;--btn:#212830;--c0:#151b23;--c1:#033a16;--c2:#196c2e;--c3:#2ea043;--c4:#56d364;}}
+:root[data-theme="dark"]{
+  --bg:#0d1117;--bg2:#151b23;--fg:#f0f6fc;--muted:#9198a1;--border:#3d444d;--link:#4493f8;
+  --nav:#010409;--btn:#212830;--c0:#151b23;--c1:#033a16;--c2:#196c2e;--c3:#2ea043;--c4:#56d364;}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans","PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif}
+a{color:var(--link);text-decoration:none}a:hover{text-decoration:underline}
+a:focus-visible,button:focus-visible{outline:2px solid var(--link);outline-offset:2px;border-radius:4px}
+svg.px{image-rendering:pixelated;shape-rendering:crispEdges;display:block}
+button{font:inherit;color:inherit;cursor:pointer}
 
-    <main id="main-content" class="page-shell">
-      <section class="intro" aria-labelledby="page-title">
-        <p class="eyebrow">ZAIGUIHUASHUXIA</p>
-        <h1 id="page-title">Wu Qi</h1>
-        <p class="lead">
-          你好，我是 Wu Qi。这里是我的个人主页，也是通往学习笔记与长期知识整理的入口。
-        </p>
+/* top bar */
+.top{background:var(--nav);border-bottom:1px solid var(--border)}
+.top .in{display:flex;align-items:center;gap:12px;padding:14px 16px;max-width:1280px;margin:auto}
+.top .who{font-weight:600;font-size:14px}
+.top .sp{flex:1}
+.theme{border:1px solid var(--border);background:var(--btn);border-radius:6px;padding:4px 8px;display:flex;align-items:center}
+.tabs{display:flex;gap:8px;max-width:1280px;margin:auto;padding:0 16px;overflow-x:auto}
+.tab{display:flex;align-items:center;gap:8px;padding:8px 8px 10px;color:var(--fg);border-bottom:2px solid transparent;white-space:nowrap}
+.tab:hover{text-decoration:none;background:color-mix(in srgb,var(--fg) 6%,transparent);border-radius:6px 6px 0 0}
+.tab.on{border-bottom-color:var(--accent);font-weight:600}
+.count{background:color-mix(in srgb,var(--muted) 20%,transparent);border-radius:2em;padding:0 6px;font-size:12px}
 
-        <nav class="links" aria-label="个人站点导航">
-          <a class="primary-link" href="https://zaiguihuashuxia.github.io/notes/">
-            <span>个人知识书库</span>
-            <span aria-hidden="true">→</span>
-          </a>
-          <a href="https://github.com/zaiguihuashuxia">
-            <span>GitHub</span>
-            <span aria-hidden="true">↗</span>
-          </a>
-        </nav>
-      </section>
+/* layout */
+.wrap{max-width:1280px;margin:auto;padding:24px 32px;display:grid;grid-template-columns:296px minmax(0,1fr);gap:24px}
+@media(max-width:767px){.wrap{grid-template-columns:1fr;padding:16px}}
 
-      <p class="footer-note">持续学习，持续整理，也持续留下思考的痕迹。</p>
-    </main>
-  </body>
+/* sidebar */
+.avatar{position:relative;width:100%;max-width:296px;aspect-ratio:1}
+.avatar img{width:100%;height:100%;border-radius:50%;border:1px solid var(--border);display:block;background:var(--bg2)}
+.avatar .badge{position:absolute;right:8%;bottom:6%;width:38px;height:38px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:grid;place-items:center}
+.avatar .crown{position:absolute;left:50%;top:-14px;transform:translateX(-50%) rotate(-8deg)}
+@media(max-width:767px){.side-head{display:flex;gap:16px;align-items:center}.avatar{width:96px;flex:none}.avatar .badge,.avatar .crown{display:none}}
+h1.name{margin:16px 0 0;font-size:24px;line-height:1.25;font-weight:600}
+.handle{font-size:20px;font-weight:300;color:var(--muted);line-height:24px}
+.bio{margin:16px 0}
+.follow{width:100%;border:1px solid var(--border);background:var(--btn);border-radius:6px;padding:5px 16px;font-weight:500;display:block;text-align:center;color:var(--fg)}
+.follow:hover{text-decoration:none;background:color-mix(in srgb,var(--btn) 80%,var(--fg) 8%)}
+.facts{list-style:none;padding:0;margin:16px 0}
+.facts li{display:flex;align-items:center;gap:8px;margin:4px 0}
+.facts svg{flex:none;fill:var(--muted)}
+.hr{border-top:1px solid var(--border);margin:16px 0}
+.h2{font-size:16px;font-weight:600;margin:0 0 8px}
+.ach{display:flex;gap:8px;flex-wrap:wrap}
+.ach span{width:56px;height:56px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);display:grid;place-items:center}
+
+/* pinned */
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 8px}
+.sec-h h2{font-size:16px;font-weight:400;margin:0}
+.pins{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;list-style:none;padding:0;margin:0 0 24px}
+@media(max-width:767px){.pins{grid-template-columns:1fr}}
+.pin{border:1px solid var(--border);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.pin .t{display:flex;align-items:center;gap:8px}
+.pin .t a{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pub{border:1px solid var(--border);border-radius:2em;padding:0 7px;font-size:12px;color:var(--muted);font-weight:500}
+.pin p{margin:0;color:var(--muted);font-size:12px;flex:1}
+.lang{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+.dot{width:10px;height:10px;display:inline-block}
+
+/* contributions */
+.contrib{border:1px solid var(--border);border-radius:6px;padding:16px 16px 10px;position:relative;overflow:hidden}
+.contrib-h{font-size:16px;font-weight:400;margin:0 0 8px}
+.track{position:relative;height:30px;margin-bottom:2px}
+.walker{position:absolute;bottom:0;left:0;animation:walk 18s linear infinite}
+.walker svg{animation:hop .5s steps(2) infinite}
+@keyframes walk{from{transform:translateX(-40px)}to{transform:translateX(calc(var(--w,700px)))}}
+@keyframes hop{50%{transform:translateY(-2px)}}
+.graph{overflow-x:auto;padding-bottom:4px}
+.graph svg{display:block}
+.graph text{fill:var(--fg);font-size:9px}
+.legend{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:12px;margin-top:6px}
+.legend .sw{display:flex;gap:3px;align-items:center}
+.legend i{width:10px;height:10px;display:inline-block;border-radius:2px}
+.cloud{position:absolute;top:10px;opacity:.55;animation:drift 40s linear infinite}
+@keyframes drift{from{transform:translateX(-80px)}to{transform:translateX(900px)}}
+
+/* activity */
+.act{margin-top:24px}
+.act-row{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--border);align-items:flex-start}
+.act-row:first-of-type{border-top:0}
+.act-row .ic{width:32px;height:32px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);display:grid;place-items:center;flex:none}
+.act-row small{color:var(--muted)}
+.pixtitle{font-family:var(--pix);font-size:10px;letter-spacing:.04em;color:var(--muted);margin:32px 0 8px;display:flex;align-items:center;gap:8px}
+
+.foot{border-top:1px solid var(--border);max-width:1280px;margin:40px auto 0;padding:24px 16px 40px;color:var(--muted);font-size:12px;display:flex;align-items:center;justify-content:center;gap:10px}
+@media (prefers-reduced-motion:reduce){.walker,.walker svg,.cloud{animation:none}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="in">
+    <span data-sprite="logo" data-scale="3" aria-hidden="true"></span>
+    <span class="who">zaiguihuashuxia</span>
+    <span class="sp"></span>
+    <button class="theme" id="theme" aria-label="切换明暗主题"><span data-sprite="moon" data-scale="2"></span></button>
+  </div>
+  <nav class="tabs" aria-label="主页导航">
+    <a class="tab on" href="#"><span data-sprite="book" data-scale="2"></span>Overview</a>
+    <a class="tab" href="https://github.com/zaiguihuashuxia?tab=repositories"><span data-sprite="repo" data-scale="2"></span>Repositories <span class="count">4</span></a>
+    <a class="tab" href="https://github.com/zaiguihuashuxia?tab=stars"><span data-sprite="star" data-scale="2"></span>Stars</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <aside>
+    <div class="side-head">
+      <div class="avatar">
+        <span class="crown" data-sprite="crown" data-scale="4" aria-hidden="true"></span>
+        <img src="https://avatars.githubusercontent.com/u/109660332?v=4&s=460" alt="Wu Qi 的头像" width="296" height="296">
+        <span class="badge" title="摸鱼中"><span data-sprite="fish" data-scale="2"></span></span>
+      </div>
+      <div>
+        <h1 class="name">Wu Qi</h1>
+        <div class="handle">zaiguihuashuxia</div>
+      </div>
+    </div>
+    <p class="bio">在桂花树下写代码。<br>BCI · MCP · 一些笔记。</p>
+    <a class="follow" href="https://github.com/zaiguihuashuxia">Follow</a>
+    <ul class="facts">
+      <li><svg viewBox="0 0 16 16" width="16" height="16"><path d="m12.596 11.596-3.535 3.536a1.5 1.5 0 0 1-2.122 0l-3.535-3.536a6.5 6.5 0 1 1 9.192-9.193 6.5 6.5 0 0 1 0 9.193Zm-1.06-8.132v-.001a5 5 0 1 0-7.072 7.072L8 14.07l3.536-3.534a5 5 0 0 0 0-7.072ZM8 9a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 9Z"/></svg>HangZhou</li>
+      <li><svg viewBox="0 0 16 16" width="16" height="16"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"/></svg><a href="https://zaiguihuashuxia.github.io">zaiguihuashuxia.github.io</a></li>
+      <li><span data-sprite="book" data-scale="2"></span><a href="https://zaiguihuashuxia.github.io/notes/">个人知识书库</a></li>
+    </ul>
+    <div class="hr"></div>
+    <h2 class="h2">Achievements</h2>
+    <div class="ach">
+      <span title="Pixel Heart"><span data-sprite="heart" data-scale="4"></span></span>
+      <span title="Osmanthus"><span data-sprite="flower" data-scale="4"></span></span>
+      <span title="Coffee"><span data-sprite="coffee" data-scale="4"></span></span>
+    </div>
+  </aside>
+
+  <section>
+    <div class="sec-h"><h2>Pinned</h2></div>
+    <ol class="pins">
+      <li class="pin"><div class="t"><span data-sprite="brain" data-scale="2"></span><a href="https://github.com/zaiguihuashuxia/bci-knowlege-assistant">bci-knowlege-assistant</a><span class="pub">Public</span></div><p>脑机接口知识助手</p><span class="lang"><i class="dot" style="background:#3572A5"></i>Python</span></li>
+      <li class="pin"><div class="t"><span data-sprite="plug" data-scale="2"></span><a href="https://github.com/zaiguihuashuxia/mcp-demo">mcp-demo</a><span class="pub">Public</span></div><p>Model Context Protocol 小实验</p><span class="lang"><i class="dot" style="background:#3572A5"></i>Python</span></li>
+      <li class="pin"><div class="t"><span data-sprite="book" data-scale="2"></span><a href="https://github.com/zaiguihuashuxia/notes">notes</a><span class="pub">Public</span></div><p>随手记下的东西</p><span class="lang"><i class="dot" style="background:#3572A5"></i>Python</span></li>
+      <li class="pin"><div class="t"><span data-sprite="house" data-scale="2"></span><a href="https://github.com/zaiguihuashuxia/zaiguihuashuxia.github.io">zaiguihuashuxia.github.io</a><span class="pub">Public</span></div><p>你正在看的这个页面</p><span class="lang"><i class="dot" style="background:#663399"></i>CSS</span></li>
+    </ol>
+
+    <h2 class="contrib-h" id="total">contributions in the last year</h2>
+    <div class="contrib">
+      <span class="cloud" style="left:0" data-sprite="cloud" data-scale="3" aria-hidden="true"></span>
+      <span class="cloud" style="left:0;top:4px;animation-delay:-22s;animation-duration:55s" data-sprite="cloud" data-scale="2" aria-hidden="true"></span>
+      <div class="track" id="track"><span class="walker" data-sprite="cat" data-scale="3" aria-hidden="true"></span></div>
+      <div class="graph" id="graph"></div>
+      <div class="legend"><span id="gnote">数据来自 GitHub 公开贡献记录</span><span class="sw">Less <i style="background:var(--c0)"></i><i style="background:var(--c1)"></i><i style="background:var(--c2)"></i><i style="background:var(--c3)"></i><i style="background:var(--c4)"></i> More</span></div>
+    </div>
+
+    <div class="act">
+      <div class="pixtitle"><span data-sprite="star" data-scale="2"></span>CONTRIBUTION ACTIVITY</div>
+      <div id="acts"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot"><span data-sprite="flower" data-scale="2"></span><span>© 2026 Wu Qi · 在桂花树下</span></footer>
+
+<script>
+'use strict';
+/* ---- pixel sprites: each char maps to a palette color, '.' is transparent ---- */
+const P={k:'#1f2328',w:'#ffffff',g:'#2ea043',G:'#216e39',y:'#f2c94c',o:'#f2994a',r:'#eb5757',p:'#ff8fab',b:'#56ccf2',B:'#2f80ed',n:'#8b5a2b',s:'#c4c4c4',l:'#9b51e0',c:'#f5e6c8',m:'var(--muted)',f:'var(--fg)',C:'var(--border)'};
+const S={
+ logo:['..ffff..','.f.ff.f.','ffffffff','ff.ff.ff','ffffffff','.ffffff.','.f.ff.f.','f......f'],
+ moon:['..fff...','.ff.....','ff......','ff......','ff......','.ff...f.','..ffff..','........'],
+ sun:['...y....','.y.y.y..','..yyy...','yyyyyyy.','..yyy...','.y.y.y..','...y....','........'],
+ book:['.mmmmmm.','m.....mm','m.mmm.mm','m.....mm','m.mmm.mm','m.....mm','mmmmmmmm','.mmmmmmm'],
+ repo:['mmmmmm..','m....m..','m.mm.m..','m....m..','m.mm.m..','mmmmmm..','.m.m....','.mm.....'],
+ star:['...yy...','...yy...','yyyyyyyy','.yyyyyy.','..yyyy..','.yy..yy.','.y....y.','........'],
+ heart:['.rr.rr..','rwrrrrr.','rrrrrrr.','rrrrrrr.','.rrrrr..','..rrr...','...r....','........'],
+ flower:['..y.y...','.yyoyy..','..yyy...','.y.g.y..','...g....','.g.g....','..gg....','...g....'],
+ coffee:['..m.m...','.m.m....','wwwwww..','wnnnnwww','wnnnnw.w','wnnnnwww','.wwww...','ssssss..'],
+ crown:['y..y..y.','yy.y.yy.','yyyyyyy.','yryybyy.','yyyyyyy.','........'],
+ fish:['....bb..','b..bbbb.','bbbbbkbb','bbbbbbbb','b..bbbb.','....bb..'],
+ brain:['.pppp...','pprppp..','pprpprp.','pppprpp.','.prppp..','..pp....','..pp....','........'],
+ plug:['.s..s...','.s..s...','gggggg..','gggggg..','.gggg...','..gg....','..mm....','..m.....'],
+ house:['...rr...','..rrrr..','.rrrrrr.','rrrrrrrr','.cccccc.','.cbcncc.','.cccncc.','.cccncc.'],
+ cloud:['..CCC.....','.CCCCC.CC.','CCCCCCCCCC','.CCCCCCCC.'],
+ cat:['k...k...','kk.kk...','kkkkk..k','kwkwk..k','kkkkkkkk','.kkkkkk.','.k.k.k.k','........'],
+};
+function sprite(name,scale){
+  const rows=S[name];if(!rows)return '';
+  const w=rows[0].length,h=rows.length;let r='';
+  rows.forEach((row,y)=>[...row].forEach((ch,x)=>{if(ch!=='.')r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${P[ch]||ch}"/>`}));
+  return `<svg class="px" viewBox="0 0 ${w} ${h}" width="${w*scale}" height="${h*scale}" aria-hidden="true">${r}</svg>`;
+}
+function paint(root=document){root.querySelectorAll('[data-sprite]').forEach(el=>{el.innerHTML=sprite(el.dataset.sprite,+el.dataset.scale||2)})}
+paint();
+
+/* ---- theme toggle ---- */
+const btn=document.getElementById('theme');
+function isDark(){const t=document.documentElement.dataset.theme;return t?t==='dark':matchMedia('(prefers-color-scheme:dark)').matches}
+function syncIcon(){btn.firstElementChild.dataset.sprite=isDark()?'sun':'moon';paint(btn)}
+try{const t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch{}
+syncIcon();
+btn.onclick=()=>{const t=isDark()?'light':'dark';document.documentElement.dataset.theme=t;try{localStorage.setItem('theme',t)}catch{}syncIcon()};
+
+/* ---- contribution graph (pixel squares) ---- */
+const USER='zaiguihuashuxia';
+const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function drawGraph(days){
+  const first=new Date(days[0].date+'T00:00:00');const off=first.getDay();
+  const cols=Math.ceil((days.length+off)/7);const cell=10,gap=3,L=28,T=16;
+  const W=L+cols*(cell+gap),H=T+7*(cell+gap);
+  let s=`<svg class="px" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="过去一年的贡献格子图">`;
+  ['','Mon','','Wed','','Fri',''].forEach((d,i)=>{if(d)s+=`<text x="0" y="${T+i*(cell+gap)+9}">${d}</text>`});
+  let lastM=-1;
+  days.forEach((d,i)=>{
+    const idx=i+off,c=Math.floor(idx/7),r=idx%7,x=L+c*(cell+gap),y=T+r*(cell+gap);
+    const m=new Date(d.date+'T00:00:00').getMonth();
+    if(r===0||i===0){if(m!==lastM&&c<cols-1){s+=`<text x="${x}" y="10">${months[m]}</text>`;lastM=m}}
+    s+=`<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="var(--c${d.level})"><title>${d.count} contributions on ${d.date}</title></rect>`;
+  });
+  document.getElementById('graph').innerHTML=s+'</svg>';
+  document.getElementById('track').style.setProperty('--w',W+'px');
+}
+function drawActs(days){
+  const byMonth={};days.forEach(d=>{if(d.count){const k=d.date.slice(0,7);byMonth[k]=(byMonth[k]||0)+d.count}});
+  const keys=Object.keys(byMonth).sort().reverse().slice(0,4);
+  const icons=['plug','book','brain','house'];
+  document.getElementById('acts').innerHTML=keys.length?keys.map((k,i)=>{
+    const [y,m]=k.split('-');
+    return `<div class="act-row"><span class="ic"><span data-sprite="${icons[i%4]}" data-scale="2"></span></span><div><div>Created <b>${byMonth[k]}</b> commit${byMonth[k]>1?'s':''}</div><small>${months[+m-1]} ${y}</small></div></div>`;
+  }).join(''):'<div class="act-row"><span class="ic"><span data-sprite="fish" data-scale="2"></span></span><div>最近在摸鱼，没有公开动态。</div></div>';
+  paint(document.getElementById('acts'));
+}
+function fallback(){
+  const days=[],now=new Date();
+  for(let i=364;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);days.push({date:d.toISOString().slice(0,10),count:0,level:0})}
+  drawGraph(days);document.getElementById('total').textContent='Contributions';document.getElementById('gnote').textContent='贡献数据暂时加载不到';drawActs([]);
+}
+fetch(`https://github-contributions-api.jogruber.de/v4/${USER}?y=last`)
+  .then(r=>r.ok?r.json():Promise.reject())
+  .then(j=>{const days=j.contributions;drawGraph(days);
+    document.getElementById('total').textContent=`${j.total.lastYear} contributions in the last year`;drawActs(days)})
+  .catch(fallback);
+</script>
+</body>
 </html>
