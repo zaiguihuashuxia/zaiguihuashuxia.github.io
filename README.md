@@ -7,7 +7,7 @@
 
 <https://zaiguihuashuxia.github.io/> 的源码：GitHub 式的布局，加一点像素画，白天和夜晚跟着主题切换。
 
-- 个人知识书库：<https://zaiguihuashuxia.github.io/notes/>
+- 博客与笔记：<https://zaiguihuashuxia.github.io/notes/>
 - GitHub：<https://github.com/zaiguihuashuxia>
 
 ## 目录
