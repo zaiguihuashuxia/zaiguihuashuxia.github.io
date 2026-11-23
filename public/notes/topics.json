@@ -3,6 +3,10 @@
     {
       "title": "agent",
       "folder": "agent"
+    },
+    {
+      "title": "Python",
+      "folder": "python"
     }
   ]
 }
