@@ -84,12 +84,11 @@ extra_javascript:
 extra:
   homepage: https://zaiguihuashuxia.github.io/
   # Comments via giscus (https://giscus.app), stored in this repo's Discussions.
-  # Comments stay hidden until repo_id and category_id are filled in.
   giscus:
     repo: zaiguihuashuxia/zaiguihuashuxia.github.io
-    repo_id: ""
+    repo_id: R_kgDOUF_1iQ
     category: Announcements
-    category_id: ""
+    category_id: DIC_kwDOUF_1ic4DLyUm
   generator: false
   social:
     - icon: material/home-outline
