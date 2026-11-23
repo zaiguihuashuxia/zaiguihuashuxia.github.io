@@ -1,0 +1,47 @@
+{#-
+  giscus comments (https://giscus.app), stored as GitHub Discussions in this repo.
+  Renders nothing until extra.giscus in mkdocs.yml has the repository and category IDs.
+-#}
+{% set g = config.extra.giscus %}
+{% if g and g.repo_id and g.category_id %}
+  <section class="zg-comments">
+    <h2 id="__comments">评论</h2>
+    <div class="giscus"></div>
+    <script>
+      (function () {
+        var schemeTheme = function () {
+          return document.body.getAttribute("data-md-color-scheme") === "slate" ? "dark" : "light";
+        };
+        var attrs = {
+          "repo": "{{ g.repo }}",
+          "repo-id": "{{ g.repo_id }}",
+          "category": "{{ g.category }}",
+          "category-id": "{{ g.category_id }}",
+          "mapping": "pathname",
+          "strict": "1",
+          "reactions-enabled": "1",
+          "emit-metadata": "0",
+          "input-position": "top",
+          "theme": schemeTheme(),
+          "lang": "zh-CN",
+          "loading": "lazy"
+        };
+        var script = document.createElement("script");
+        script.src = "https://giscus.app/client.js";
+        script.async = true;
+        script.crossOrigin = "anonymous";
+        for (var key in attrs) script.setAttribute("data-" + key, attrs[key]);
+        document.currentScript.parentNode.appendChild(script);
+        // follow the site's light / dark toggle
+        new MutationObserver(function () {
+          var frame = document.querySelector("iframe.giscus-frame");
+          if (frame) {
+            frame.contentWindow.postMessage(
+              { giscus: { setConfig: { theme: schemeTheme() } } }, "https://giscus.app"
+            );
+          }
+        }).observe(document.body, { attributes: true, attributeFilter: ["data-md-color-scheme"] });
+      })();
+    </script>
+  </section>
+{% endif %}

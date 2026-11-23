@@ -1,0 +1,4 @@
+{#- Notes pages get comments when their frontmatter says comments: true. -#}
+{% if page.meta and page.meta.comments %}
+  {% include "partials/giscus.html" %}
+{% endif %}

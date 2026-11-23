@@ -1,0 +1,25 @@
+{#-
+  Blog post page without Material's "元数据" sidebar:
+  the date sits under the title, a link leads back to the blog, then comments
+  (on by default; a post can opt out with comments: false).
+-#}
+{% extends "main.html" %}
+{% block container %}
+  <div class="md-content md-content--post" data-md-component="content">
+    <article class="md-content__inner md-typeset">
+      {% include "partials/actions.html" %}
+      <h1>{{ page.title }}</h1>
+      <p class="zg-post-date">
+        <time datetime="{{ page.config.date.created }}">{{ page.config.date.created | date }}</time>
+        {%- if page.config.date.updated %}
+          · 更新于 <time datetime="{{ page.config.date.updated }}">{{ page.config.date.updated | date }}</time>
+        {%- endif %}
+      </p>
+      {{ page.content }}
+      <p class="zg-post-back"><a href="{{ page.parent.url | url }}">← 返回博客</a></p>
+      {% if not (page.meta and page.meta.comments is sameas false) %}
+        {% include "partials/giscus.html" %}
+      {% endif %}
+    </article>
+  </div>
+{% endblock %}

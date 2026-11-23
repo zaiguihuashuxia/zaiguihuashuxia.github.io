@@ -1,0 +1,76 @@
+# 写作后台（Sveltia CMS）配置，文档：https://sveltiacms.app/en/docs
+# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms@0.262.1/schema/sveltia-cms.json
+
+backend:
+  name: github
+  repo: zaiguihuashuxia/zaiguihuashuxia.github.io
+  branch: main
+  commit_messages:
+    create: "content: 新建「{{slug}}」"
+    update: "content: 更新「{{slug}}」"
+    delete: "content: 删除「{{slug}}」"
+    uploadMedia: "content: 上传 {{path}}"
+    deleteMedia: "content: 删除 {{path}}"
+
+site_url: https://zaiguihuashuxia.github.io/
+display_url: https://zaiguihuashuxia.github.io/
+
+media_folder: public/assets/images
+public_folder: /assets/images
+
+output:
+  omit_empty_optional_fields: true
+
+collections:
+  - name: posts
+    label: 博客
+    label_singular: 文章
+    description: 写完点保存，GitHub 会自动构建，一两分钟后发布到网站。
+    folder: public/blog/posts
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{fields.slug}}"
+    media_folder: images
+    public_folder: images
+    sortable_fields: [date, title]
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - name: slug
+        label: 网址
+        widget: string
+        hint: 文章网址的最后一段，只能用小写英文、数字和连字符，例如 first-post
+        pattern: ["^[a-z0-9]+(-[a-z0-9]+)*$", "只能用小写英文、数字和连字符"]
+      - { name: date, label: 日期, widget: datetime, type: date, default: "{{now}}" }
+      - { name: description, label: 摘要, widget: string, required: false, hint: 显示在搜索结果和分享卡片里 }
+      - { name: draft, label: 草稿, widget: boolean, required: false, default: false, hint: 打开后这篇不会出现在网站上 }
+      - { name: comments, label: 评论, widget: boolean, required: false, default: true, hint: 关掉后这篇文章底部不显示评论区 }
+      - name: body
+        label: 正文
+        widget: markdown
+        modes: [raw, rich_text]
+        hint: 列表页只显示第一段；想自己决定截到哪里，就在那里单独写一行 <!-- more -->
+
+  - name: notes
+    label: 笔记
+    label_singular: 笔记
+    description: 按文件夹整理的学习笔记，文件夹里的 index.md 是这一节的入口页。
+    folder: public/notes
+    create: true
+    nested: { depth: 8, subfolders: false }
+    meta: { path: {} }
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - { name: nav_title, label: 导航名, widget: string, required: false, hint: 左侧导航里显示的短名字，不填就用标题 }
+      - { name: description, label: 简介, widget: string, required: false }
+      - { name: order, label: 排序, widget: number, value_type: int, required: false, hint: 数字越小越靠前 }
+      - { name: series, label: 系列, widget: string, required: false, hint: 同一系列的笔记会按排序自动串成上一篇、下一篇，这时排序必填 }
+      - { name: tags, label: 标签, widget: list, required: false }
+      - { name: comments, label: 评论, widget: boolean, required: false, default: false, hint: 打开后这一页底部显示评论区 }
+      - name: hide
+        label: 隐藏页面元素
+        widget: select
+        multiple: true
+        required: false
+        options:
+          - { label: 左侧导航, value: navigation }
+          - { label: 右侧目录, value: toc }
+      - { name: body, label: 正文, widget: markdown, modes: [raw, rich_text] }
