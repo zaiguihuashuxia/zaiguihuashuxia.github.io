@@ -11,7 +11,7 @@
 | --- | --- | --- |
 | `/` | GitHub 式的主页 | `public/index.html`（手写，原样发布） |
 | `/blog/` | 博客 | `public/blog/`，文章在 `public/blog/posts/` |
-| `/notes/` | 学习笔记 | `public/notes/`，每个文件夹的 `index.md` 是这一节的入口页 |
+| `/notes/` | 学习笔记 | `public/notes/`，文件夹可以一层套一层 |
 | `/admin/` | 写作后台 | `public/admin/`（[Sveltia CMS](https://sveltiacms.app/)） |
 
 博客和笔记用 Material for MkDocs 构建，外观和主页统一；文章下面的评论由 [giscus](https://giscus.app/) 存在本仓库的 Discussions 里。主页的贡献格子图由浏览器从 [github-contributions-api](https://github.com/grubersjoe/github-contributions-api) 实时读取。Obsidian 和 iCloud 里的私人笔记不会进入这个仓库，只有放进 `public/` 的内容才会公开。
@@ -39,7 +39,16 @@ comments: false         # 可选，关掉这篇的评论区
 正文。列表页只显示第一段；想自己决定截到哪里，就单独写一行 <!-- more -->
 ```
 
-文章会发布在 `/blog/年/月/slug/`。笔记页默认没有评论区，需要的话在开头加 `comments: true`。
+文章会发布在 `/blog/年/月/slug/`。
+
+## 笔记的文件夹
+
+笔记按文件夹分层，每一层的页面会自动把里面的文件夹和笔记列成卡片，左侧导航也会按同样的层次排好。在后台：
+
+1. 左边选「笔记」，树下面点 **New Folder** 新建文件夹（可以建在别的文件夹里）。
+2. 在树里选中文件夹，点右上角 **New**，上面的 **Parent Folder** 就是笔记要放进的文件夹，写完点 **Save**。文件夹要等里面保存了第一篇笔记才会真正出现在仓库里。
+
+卡片上的说明取笔记的「简介」，不填就用正文第一段。文件夹默认用文件夹名当标题；想给它换标题、加简介、调排序，就在文件夹里放一个写好 `title`、`description`、`order` 的 `index.md`。笔记页默认没有评论区，需要的话打开「评论」。
 
 ## 本地运行
 

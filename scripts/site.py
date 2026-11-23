@@ -40,8 +40,13 @@ PRIVATE_SENTINELS = (
 )
 SEARCH_TERMS = ("博客", "笔记")
 BLOG_POSTS_PREFIX = "blog/posts/"
+NOTES_DIR_NAME = "notes"
 HOMEPAGE_URL = "https://zaiguihuashuxia.github.io/"
 POST_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+LEADING_TITLE = re.compile(r"\A\s*#[ \t]+[^\n]*\n+")
+FENCE = re.compile(r"^\s*(```|~~~)", re.M)
+SUMMARY_LENGTH = 80
+DEFAULT_ORDER = 10_000
 
 
 class ContentValidationError(RuntimeError):
@@ -65,8 +70,42 @@ class Document:
 
     @property
     def order(self) -> int:
-        value = self.metadata.get("order", 10_000)
-        return value if isinstance(value, int) and not isinstance(value, bool) else 10_000
+        value = self.metadata.get("order", DEFAULT_ORDER)
+        return value if isinstance(value, int) and not isinstance(value, bool) else DEFAULT_ORDER
+
+    @property
+    def description(self) -> str:
+        value = self.metadata.get("description")
+        return value.strip() if isinstance(value, str) else ""
+
+
+@dataclass(frozen=True)
+class Folder:
+    """A folder of notes; its index.md is optional and only adds a title and an intro."""
+
+    path: Path
+    relative_path: str
+    index: Optional[Document]
+
+    @property
+    def index_path(self) -> str:
+        return f"{self.relative_path}/index.md"
+
+    @property
+    def title(self) -> str:
+        return self.index.title if self.index else self.path.name
+
+    @property
+    def nav_title(self) -> str:
+        return self.index.nav_title if self.index else self.path.name
+
+    @property
+    def order(self) -> int:
+        return self.index.order if self.index else DEFAULT_ORDER
+
+    @property
+    def description(self) -> str:
+        return self.index.description if self.index else ""
 
 
 def read_document(path: Path, public_dir: Path = PUBLIC_DIR) -> Document:
@@ -193,34 +232,111 @@ def _validate_post(document: Document, seen_slugs: Dict[str, str]) -> List[str]:
     return errors
 
 
-def _sort_key(document: Document) -> Tuple[int, str]:
-    return document.order, document.nav_title.casefold()
+def _sort_key(item: Any) -> Tuple[int, str]:
+    return item.order, item.nav_title.casefold()
 
 
-def _build_directory_nav(directory: Path, by_path: Dict[Path, Document]) -> List[Any]:
-    items: List[Any] = []
-    index_path = directory / "index.md"
-    if index_path in by_path:
-        index = by_path[index_path]
-        items.append(index.relative_path)
+def _is_notes_subfolder(directory: Path, public_dir: Path) -> bool:
+    try:
+        parts = directory.relative_to(public_dir).parts
+    except ValueError:
+        return False
+    return len(parts) >= 2 and parts[0] == NOTES_DIR_NAME
 
-    child_entries: List[Tuple[Tuple[int, str], Any]] = []
+
+def _contains_documents(directory: Path, by_path: Dict[Path, Document]) -> bool:
+    return any(directory in path.parents for path in by_path)
+
+
+def list_children(
+    directory: Path, by_path: Dict[Path, Document], public_dir: Path = PUBLIC_DIR
+) -> Tuple[List[Folder], List[Document]]:
+    """Subfolders, then pages, of one folder, each sorted by order and then name.
+
+    Outside notes/ a subfolder needs an index.md to count; inside notes/ any folder holding a
+    note counts, because the writing admin creates folders without one.
+    """
+    if not directory.is_dir():
+        return [], []
+    folders: List[Folder] = []
     for child_dir in sorted(path for path in directory.iterdir() if path.is_dir()):
-        child_index_path = child_dir / "index.md"
-        if child_index_path not in by_path:
+        index = by_path.get(child_dir / "index.md")
+        if index is None and not (
+            _is_notes_subfolder(child_dir, public_dir) and _contains_documents(child_dir, by_path)
+        ):
             continue
-        child_index = by_path[child_index_path]
-        child_entries.append(
-            (_sort_key(child_index), {child_index.nav_title: _build_directory_nav(child_dir, by_path)})
-        )
+        folders.append(Folder(child_dir, child_dir.relative_to(public_dir).as_posix(), index))
+    pages = [
+        by_path[path]
+        for path in sorted(directory.glob("*.md"))
+        if path.name != "index.md" and path in by_path
+    ]
+    return sorted(folders, key=_sort_key), sorted(pages, key=_sort_key)
 
-    for child_file in sorted(directory.glob("*.md")):
-        if child_file.name == "index.md" or child_file not in by_path:
+
+def generated_folder_indexes(
+    documents: Iterable[Document], public_dir: Path = PUBLIC_DIR
+) -> List[Folder]:
+    """Notes folders that hold notes but no index.md; the build gives each a listing page."""
+    by_path = {document.path: document for document in documents}
+    notes_dir = public_dir / NOTES_DIR_NAME
+    folders = set()
+    for path in by_path:
+        for parent in path.parents:
+            if parent == notes_dir or notes_dir not in parent.parents:
+                break
+            folders.add(parent)
+    return [
+        Folder(folder, folder.relative_to(public_dir).as_posix(), None)
+        for folder in sorted(folders)
+        if folder / "index.md" not in by_path
+    ]
+
+
+def count_notes(folder: Folder, by_path: Dict[Path, Document]) -> int:
+    return sum(1 for path in by_path if folder.path in path.parents and path.name != "index.md")
+
+
+def _plain_text(markdown_text: str) -> str:
+    text = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", markdown_text)
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = re.sub(r"(?m)^\s*(?:[-*+]|\d+\.|>)\s+", "", text)
+    text = re.sub(r"\*\*|__|~~|`|(?<!\w)[*_]|[*_](?!\w)", "", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def note_summary(document: Document, limit: int = SUMMARY_LENGTH) -> str:
+    """The note's description, or else the start of its first paragraph."""
+    if document.description:
+        return document.description
+    body = LEADING_TITLE.sub("", document.body, count=1)
+    in_fence = False
+    for block in re.split(r"\n[ \t]*\n", body.strip()):
+        fences = len(FENCE.findall(block))
+        starts_inside = in_fence
+        in_fence = in_fence ^ (fences % 2 == 1)
+        stripped = block.strip()
+        if starts_inside or fences or stripped.startswith(("#", "<", "!!!", "???", "|", "$$")):
             continue
-        document = by_path[child_file]
-        child_entries.append((_sort_key(document), {document.nav_title: document.relative_path}))
+        text = _plain_text(stripped)
+        if text:
+            return text if len(text) <= limit else text[:limit].rstrip() + "…"
+    return ""
 
-    items.extend(value for _, value in sorted(child_entries, key=lambda item: item[0]))
+
+def _build_directory_nav(
+    directory: Path, by_path: Dict[Path, Document], public_dir: Path = PUBLIC_DIR
+) -> List[Any]:
+    items: List[Any] = []
+    if (directory / "index.md") in by_path or _is_notes_subfolder(directory, public_dir):
+        items.append(f"{directory.relative_to(public_dir).as_posix()}/index.md")
+    folders, pages = list_children(directory, by_path, public_dir)
+    items.extend(
+        {folder.nav_title: _build_directory_nav(folder.path, by_path, public_dir)}
+        for folder in folders
+    )
+    items.extend({page.nav_title: page.relative_path} for page in pages)
     return items
 
 
@@ -235,7 +351,7 @@ def build_navigation(documents: Sequence[Document], public_dir: Path = PUBLIC_DI
     child_dirs.sort(key=lambda path: _sort_key(by_path[path / "index.md"]))
     for child_dir in child_dirs:
         index = by_path[child_dir / "index.md"]
-        nav.append({index.nav_title: _build_directory_nav(child_dir, by_path)})
+        nav.append({index.nav_title: _build_directory_nav(child_dir, by_path, public_dir)})
     return nav
 
 

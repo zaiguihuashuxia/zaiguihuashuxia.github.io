@@ -11,7 +11,9 @@ from scripts.site import (
     ContentValidationError,
     build_navigation,
     collect_documents,
+    generated_folder_indexes,
     inspect_site,
+    note_summary,
     read_document,
     validate_content,
 )
@@ -81,6 +83,51 @@ class SiteToolTests(unittest.TestCase):
         java_items = nav[1]["Java"]
         self.assertEqual(java_items[1], {"First": "java/first.md"})
         self.assertEqual(java_items[2], {"Second": "java/second.md"})
+
+    def test_notes_folders_without_index_still_get_a_page(self) -> None:
+        self.write("notes/index.md", "---\ntitle: 笔记\n---\n")
+        self.write("notes/展示/小玩意.md", "---\ntitle: 小玩意\nnav_title: gadgets\n---\n")
+        self.write("notes/编程/index.md", "---\ntitle: 编程\norder: 1\n---\n")
+        self.write("notes/编程/git.md", "---\ntitle: Git\n---\n")
+        self.write("notes/编程/python/装饰器.md", "---\ntitle: 装饰器\n---\n")
+        self.write("blog/index.md", "---\ntitle: 博客\n---\n")
+        self.write("blog/posts/a.md", "---\ntitle: A\ndate: 2026-11-23\nslug: a\n---\n")
+        documents = validate_content(self.root)
+
+        nav = build_navigation(documents, self.root)
+        self.assertIn({"博客": ["blog/index.md"]}, nav)
+        self.assertIn(
+            {
+                "笔记": [
+                    "notes/index.md",
+                    {
+                        "编程": [
+                            "notes/编程/index.md",
+                            {"python": ["notes/编程/python/index.md", {"装饰器": "notes/编程/python/装饰器.md"}]},
+                            {"Git": "notes/编程/git.md"},
+                        ]
+                    },
+                    {"展示": ["notes/展示/index.md", {"gadgets": "notes/展示/小玩意.md"}]},
+                ]
+            },
+            nav,
+        )
+        generated = [folder.index_path for folder in generated_folder_indexes(documents, self.root)]
+        self.assertEqual(generated, ["notes/展示/index.md", "notes/编程/python/index.md"])
+
+    def test_note_summary_prefers_description_then_first_paragraph(self) -> None:
+        described = self.write("a.md", "---\ntitle: A\ndescription: 一句话\n---\n\n正文\n")
+        self.assertEqual(note_summary(read_document(described, self.root)), "一句话")
+        plain = self.write(
+            "b.md",
+            "---\ntitle: B\n---\n\n# B\n\n```bash\nls\n```\n\n"
+            "用 **Git** 管理 `snake_case` 代码，见[文档](https://git-scm.com)。\n\n第二段\n",
+        )
+        self.assertEqual(
+            note_summary(read_document(plain, self.root)), "用 Git 管理 snake_case 代码，见文档。"
+        )
+        long = self.write("c.md", "---\ntitle: C\n---\n\n" + "字" * 100 + "\n")
+        self.assertEqual(note_summary(read_document(long, self.root), limit=10), "字" * 10 + "…")
 
     def test_blog_post_requires_date_and_slug(self) -> None:
         self.write("blog/posts/no-meta.md", "---\ntitle: 没有日期\n---\n\n正文\n")
