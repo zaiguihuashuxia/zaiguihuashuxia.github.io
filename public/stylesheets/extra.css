@@ -245,6 +245,43 @@
   color: var(--md-default-fg-color--light);
 }
 
+/* sidebar tree. With tabs on, Material lifts the active tab (笔记) into the sidebar as a fixed
+   section heading: no fold arrow and its notes flush with it, so they read as siblings. Give the
+   heading its arrow back, let it fold like any folder, and indent every level under a guide line. */
+@media screen and (min-width: 76.25em) {
+  .md-nav--lifted > .md-nav__list > .md-nav__item--section > .md-nav__link > [for] {
+    display: flex;
+  }
+  .md-nav--lifted > .md-nav__list > .md-nav__item--section > .md-nav__link .md-nav__icon {
+    display: block;
+  }
+  .md-nav--lifted > .md-nav__list > .md-nav__item--section > .md-nav__toggle ~ .md-nav {
+    display: grid;
+    grid-template-rows: minmax(0.4rem, 0fr);
+    opacity: 0;
+    visibility: collapse;
+    transition: grid-template-rows 0.25s cubic-bezier(0.86, 0, 0.07, 1), opacity 0.25s,
+      visibility 0ms 0.25s;
+  }
+  .md-nav--lifted > .md-nav__list > .md-nav__item--section > .md-nav__toggle:checked ~ .md-nav {
+    grid-template-rows: minmax(0.4rem, 1fr);
+    opacity: 1;
+    visibility: visible;
+    transition: grid-template-rows 0.25s cubic-bezier(0.86, 0, 0.07, 1), opacity 0.15s 0.1s,
+      visibility 0ms;
+  }
+  [dir="ltr"] .md-nav--lifted > .md-nav__list > .md-nav__item--section > .md-nav:not(.md-nav--secondary) {
+    margin-left: 0;
+  }
+  .md-nav--lifted > .md-nav__list > .md-nav__item--section > .md-nav > .md-nav__list > .md-nav__item {
+    padding: 0 0 0 0.6rem;
+  }
+  [dir="ltr"] .md-nav--lifted .md-nav__item--nested > .md-nav > .md-nav__list {
+    margin-left: 0.2rem;
+    border-left: 1px solid var(--zg-border);
+  }
+}
+
 /* footer: less is more, plus a small bunny */
 .md-copyright em {
   font: italic 1rem/1 "Instrument Serif", Georgia, serif;
