@@ -14,7 +14,7 @@
 | `/notes/` | 学习笔记 | `public/notes/`，文件夹可以一层套一层 |
 | `/admin/` | 写作后台 | `public/admin/`（[Sveltia CMS](https://sveltiacms.app/)） |
 
-博客和笔记用 Material for MkDocs 构建，外观和主页统一；文章下面的评论由 [giscus](https://giscus.app/) 存在本仓库的 Discussions 里。主页的贡献格子图由浏览器从 [github-contributions-api](https://github.com/grubersjoe/github-contributions-api) 实时读取。Obsidian 和 iCloud 里的私人笔记不会进入这个仓库，只有放进 `public/` 的内容才会公开。
+博客和笔记用 Material for MkDocs 构建，外观和主页统一；文章下面的评论由 [giscus](https://giscus.app/) 存在本仓库的 Discussions 里。主页的贡献格子图由浏览器从 [github-contributions-api](https://github.com/grubersjoe/github-contributions-api) 实时读取。 `public/` 的内容是公开的。
 
 ## 在网页上写作
 
