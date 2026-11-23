@@ -3,9 +3,7 @@ title: 笔记
 nav_title: 笔记
 description: 学过的知识，按主题慢慢整理成笔记
 order: 10
-hide:
-  - navigation
-  - toc
+comments: true
 ---
 
 # 笔记
