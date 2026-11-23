@@ -12,10 +12,10 @@ class HomepageTests(unittest.TestCase):
         self.assertTrue(homepage.is_file(), "public/index.html must exist")
         html = homepage.read_text(encoding="utf-8")
 
-        self.assertIn("<title>Wu Qi", html)
+        self.assertIn("<title>zaiguihuashuxia", html)
         self.assertIn("<main", html)
         self.assertIn("<h1", html)
-        self.assertIn("Wu Qi", html)
+        self.assertIn("zaiguihuashuxia", html)
         self.assertIn('href="https://zaiguihuashuxia.github.io/notes/"', html)
         self.assertIn('href="https://github.com/zaiguihuashuxia"', html)
         self.assertNotIn("data-md-component", html)
