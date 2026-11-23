@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import posixpath
 import re
 import sys
@@ -50,11 +49,9 @@ def on_config(config: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def on_files(files: Any, config: Dict[str, Any]) -> Any:
-    """Give every notes folder without an index.md a page, so it can be opened and listed."""
+    """Give the notes landing page and every notes folder without an index.md a page."""
     for folder in generated_folder_indexes(DOCUMENTS.values(), Path(config["docs_dir"])):
-        heading = re.sub(r"([\\`*_\[\]#])", r"\\\1", folder.title)
-        content = f"---\ntitle: {json.dumps(folder.title, ensure_ascii=False)}\n---\n\n# {heading}\n"
-        files.append(File.generated(config, folder.index_path, content=content))
+        files.append(File.generated(config, folder.index_path, content=folder.generated_markdown()))
     return files
 
 

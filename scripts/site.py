@@ -41,6 +41,8 @@ PRIVATE_SENTINELS = (
 SEARCH_TERMS = ("博客", "笔记")
 BLOG_POSTS_PREFIX = "blog/posts/"
 NOTES_DIR_NAME = "notes"
+NOTES_TITLE = "笔记"
+NOTES_INTRO = "按主题整理的学习笔记，整理好一篇放一篇。"
 HOMEPAGE_URL = "https://zaiguihuashuxia.github.io/"
 POST_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LEADING_TITLE = re.compile(r"\A\s*#[ \t]+[^\n]*\n+")
@@ -92,12 +94,18 @@ class Folder:
         return f"{self.relative_path}/index.md"
 
     @property
+    def is_notes_root(self) -> bool:
+        return self.relative_path == NOTES_DIR_NAME
+
+    @property
     def title(self) -> str:
-        return self.index.title if self.index else self.path.name
+        if self.index:
+            return self.index.title
+        return NOTES_TITLE if self.is_notes_root else self.path.name
 
     @property
     def nav_title(self) -> str:
-        return self.index.nav_title if self.index else self.path.name
+        return self.index.nav_title if self.index else self.title
 
     @property
     def order(self) -> int:
@@ -106,6 +114,12 @@ class Folder:
     @property
     def description(self) -> str:
         return self.index.description if self.index else ""
+
+    def generated_markdown(self) -> str:
+        """The page the build uses for this folder while it has no index.md of its own."""
+        heading = re.sub(r"([\\`*_\[\]#])", r"\\\1", self.title)
+        intro = f"\n{NOTES_INTRO}\n" if self.is_notes_root else ""
+        return f"---\ntitle: {json.dumps(self.title, ensure_ascii=False)}\n---\n\n# {heading}\n{intro}"
 
 
 def read_document(path: Path, public_dir: Path = PUBLIC_DIR) -> Document:
@@ -236,12 +250,12 @@ def _sort_key(item: Any) -> Tuple[int, str]:
     return item.order, item.nav_title.casefold()
 
 
-def _is_notes_subfolder(directory: Path, public_dir: Path) -> bool:
+def _is_notes_folder(directory: Path, public_dir: Path) -> bool:
     try:
         parts = directory.relative_to(public_dir).parts
     except ValueError:
         return False
-    return len(parts) >= 2 and parts[0] == NOTES_DIR_NAME
+    return len(parts) >= 1 and parts[0] == NOTES_DIR_NAME
 
 
 def _contains_documents(directory: Path, by_path: Dict[Path, Document]) -> bool:
@@ -262,7 +276,7 @@ def list_children(
     for child_dir in sorted(path for path in directory.iterdir() if path.is_dir()):
         index = by_path.get(child_dir / "index.md")
         if index is None and not (
-            _is_notes_subfolder(child_dir, public_dir) and _contains_documents(child_dir, by_path)
+            _is_notes_folder(child_dir, public_dir) and _contains_documents(child_dir, by_path)
         ):
             continue
         folders.append(Folder(child_dir, child_dir.relative_to(public_dir).as_posix(), index))
@@ -277,10 +291,14 @@ def list_children(
 def generated_folder_indexes(
     documents: Iterable[Document], public_dir: Path = PUBLIC_DIR
 ) -> List[Folder]:
-    """Notes folders that hold notes but no index.md; the build gives each a listing page."""
+    """Notes folders without an index.md; the build gives each a listing page.
+
+    The notes landing page is always among them when missing, so deleting it in the writing
+    admin cannot take /notes/ off the site.
+    """
     by_path = {document.path: document for document in documents}
     notes_dir = public_dir / NOTES_DIR_NAME
-    folders = set()
+    folders = {notes_dir}
     for path in by_path:
         for parent in path.parents:
             if parent == notes_dir or notes_dir not in parent.parents:
@@ -329,7 +347,7 @@ def _build_directory_nav(
     directory: Path, by_path: Dict[Path, Document], public_dir: Path = PUBLIC_DIR
 ) -> List[Any]:
     items: List[Any] = []
-    if (directory / "index.md") in by_path or _is_notes_subfolder(directory, public_dir):
+    if (directory / "index.md") in by_path or _is_notes_folder(directory, public_dir):
         items.append(f"{directory.relative_to(public_dir).as_posix()}/index.md")
     folders, pages = list_children(directory, by_path, public_dir)
     items.extend(
@@ -347,11 +365,16 @@ def build_navigation(documents: Sequence[Document], public_dir: Path = PUBLIC_DI
     if root_index in by_path:
         nav.append({by_path[root_index].nav_title: by_path[root_index].relative_path})
 
-    child_dirs = [path for path in public_dir.iterdir() if path.is_dir() and (path / "index.md") in by_path]
-    child_dirs.sort(key=lambda path: _sort_key(by_path[path / "index.md"]))
-    for child_dir in child_dirs:
-        index = by_path[child_dir / "index.md"]
-        nav.append({index.nav_title: _build_directory_nav(child_dir, by_path, public_dir)})
+    sections = [
+        Folder(path, path.name, by_path[path / "index.md"])
+        for path in public_dir.iterdir()
+        if path.is_dir() and (path / "index.md") in by_path
+    ]
+    notes_dir = public_dir / NOTES_DIR_NAME
+    if not any(section.path == notes_dir for section in sections):
+        sections.append(Folder(notes_dir, NOTES_DIR_NAME, None))
+    for section in sorted(sections, key=_sort_key):
+        nav.append({section.nav_title: _build_directory_nav(section.path, by_path, public_dir)})
     return nav
 
 

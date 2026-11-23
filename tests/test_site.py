@@ -115,6 +115,20 @@ class SiteToolTests(unittest.TestCase):
         generated = [folder.index_path for folder in generated_folder_indexes(documents, self.root)]
         self.assertEqual(generated, ["notes/展示/index.md", "notes/编程/python/index.md"])
 
+    def test_notes_landing_page_survives_being_deleted(self) -> None:
+        self.write("blog/index.md", "---\ntitle: 博客\norder: 5\n---\n")
+        self.write("notes/备忘录1.md", "---\ntitle: 备忘录1\nnav_title: memo1\n---\n")
+        documents = validate_content(self.root)
+
+        nav = build_navigation(documents, self.root)
+        self.assertEqual(
+            nav, [{"博客": ["blog/index.md"]}, {"笔记": ["notes/index.md", {"memo1": "notes/备忘录1.md"}]}]
+        )
+        landing = generated_folder_indexes(documents, self.root)[0]
+        self.assertEqual(landing.index_path, "notes/index.md")
+        self.assertIn("title: \"笔记\"", landing.generated_markdown())
+        self.assertIn("# 笔记", landing.generated_markdown())
+
     def test_note_summary_prefers_description_then_first_paragraph(self) -> None:
         described = self.write("a.md", "---\ntitle: A\ndescription: 一句话\n---\n\n正文\n")
         self.assertEqual(note_summary(read_document(described, self.root)), "一句话")
